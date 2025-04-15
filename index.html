@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Flip Explorer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0;
+            background-color: #f9f9f9;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header-section {
+            padding: 10px 20px 0 20px;
+            background-color: #f9f9f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin: 10px 0;
+            font-size: 24px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        button {
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        #reset {
+            background-color: #607D8B;
+        }
+        
+        #show-h-sym {
+            background-color: #4CAF50;
+        }
+        
+        #show-v-sym {
+            background-color: #2196F3;
+        }
+        
+        #show-both-sym {
+            background: linear-gradient(135deg, #4CAF50 50%, #2196F3 50%);
+        }
+        
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 20px 20px;
+        }
+        
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 12px;
+            padding-bottom: 20px;
+        }
+        
+        .character-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .character-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .character {
+            font-size: 42px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .flip-h {
+            transform: scaleX(-1);
+        }
+        
+        .flip-v {
+            transform: scaleY(-1);
+        }
+        
+        .flip-both {
+            transform: scale(-1, -1);
+        }
+        
+        .selected {
+            background-color: #e8f5e9;
+            border: 2px solid #4CAF50;
+        }
+        
+        .info-panel {
+            margin-bottom: 10px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-display {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .info-character {
+            font-size: 60px;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .flip-icon {
+            font-size: 18px;
+            margin-right: 5px;
+            color: inherit;
+        }
+        
+        .display-container {
+            text-align: center;
+        }
+        
+        .display-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .sym-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        
+        .has-h-sym {
+            background-color: #4CAF50;
+        }
+        
+        .has-v-sym {
+            background-color: #2196F3;
+        }
+        
+        .has-both-sym {
+            background: linear-gradient(135deg, #4CAF50 50%, #2196F3 50%);
+        }
+        
+        /* Compact button text */
+        .button-text {
+            display: none;
+        }
+        
+        /* Show tooltips on hover */
+        button {
+            position: relative;
+        }
+        
+        button:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-section">
+        <h1>Character Flip Explorer</h1>
+        
+        <div class="info-panel">
+            <div class="info-display">
+                <div class="display-container">
+                    <div class="display-title">
+                        <span>Original</span>
+                    </div>
+                    <div class="info-character" id="original"></div>
+                </div>
+                <div class="display-container">
+                    <div class="display-title">
+                        <span class="flip-icon">↔️</span>
+                        <span>H-Flip</span>
+                    </div>
+                    <div class="info-character flip-h" id="horizontal"></div>
+                </div>
+                <div class="display-container">
+                    <div class="display-title">
+                        <span class="flip-icon">↕️</span>
+                        <span>V-Flip</span>
+                    </div>
+                    <div class="info-character flip-v" id="vertical"></div>
+                </div>
+                <div class="display-container">
+                    <div class="display-title">
+                        <span class="flip-icon">⟲</span>
+                        <span>Both</span>
+                    </div>
+                    <div class="info-character flip-both" id="both"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="reset" data-tooltip="Show All Characters">All</button>
+            <button id="show-h-sym" data-tooltip="Show Horizontal Symmetry">
+                <span class="flip-icon">↕️</span>
+                <span class="button-text">H-Sym</span>
+            </button>
+            <button id="show-v-sym" data-tooltip="Show Vertical Symmetry">
+                <span class="flip-icon">↔️</span>
+                <span class="button-text">V-Sym</span>
+            </button>
+            <button id="show-both-sym" data-tooltip="Show Full Symmetry">
+                <span class="flip-icon">⟲</span>
+                <span class="button-text">Both</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="scrollable-content">
+        <div class="character-grid" id="char-grid"></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const grid = document.getElementById('char-grid');
+            const originalDisplay = document.getElementById('original');
+            const horizontalDisplay = document.getElementById('horizontal');
+            const verticalDisplay = document.getElementById('vertical');
+            const bothDisplay = document.getElementById('both');
+            
+            const resetBtn = document.getElementById('reset');
+            const hSymBtn = document.getElementById('show-h-sym');
+            const vSymBtn = document.getElementById('show-v-sym');
+            const bothSymBtn = document.getElementById('show-both-sym');
+            
+            // Generate all alphanumeric characters
+            const characters = [];
+            
+            // Uppercase letters
+            for (let i = 65; i <= 90; i++) {
+                characters.push(String.fromCharCode(i));
+            }
+            
+            // Lowercase letters
+            for (let i = 97; i <= 122; i++) {
+                characters.push(String.fromCharCode(i));
+            }
+            
+            // Numbers
+            for (let i = 48; i <= 57; i++) {
+                characters.push(String.fromCharCode(i));
+            }
+            
+            // Special characters
+            const specialChars = "!@#$%^&*()_+{}|:<>?-=[];',./`~";
+            for (let char of specialChars) {
+                characters.push(char);
+            }
+            
+            // Create character cards
+            function createCharacterCards() {
+                grid.innerHTML = '';
+                characters.forEach(char => {
+                    const card = document.createElement('div');
+                    card.className = 'character-card';
+                    
+                    // Check symmetry properties
+                    const hasHSym = isHorizontallySymmetric(char);
+                    const hasVSym = isVerticallySymmetric(char);
+                    const hasBothSym = hasHSym && hasVSym;
+                    
+                    // Add symmetry indicators
+                    let indicatorHtml = '';
+                    if (hasHSym || hasVSym) {
+                        if (hasBothSym) {
+                            indicatorHtml = '<span class="sym-indicator has-both-sym" title="Has both horizontal and vertical symmetry"></span>';
+                        } else if (hasHSym) {
+                            indicatorHtml = '<span class="sym-indicator has-h-sym" title="Has horizontal symmetry"></span>';
+                        } else if (hasVSym) {
+                            indicatorHtml = '<span class="sym-indicator has-v-sym" title="Has vertical symmetry"></span>';
+                        }
+                    }
+                    
+                    card.innerHTML = `<span class="character">${char}</span><span>${char} ${indicatorHtml}</span>`;
+                    card.addEventListener('click', () => selectCharacter(char));
+                    
+                    // Add data attributes for filtering
+                    if (hasHSym) {
+                        card.dataset.hSym = true;
+                    }
+                    
+                    if (hasVSym) {
+                        card.dataset.vSym = true;
+                    }
+                    
+                    if (hasBothSym) {
+                        card.dataset.bothSym = true;
+                    }
+                    
+                    grid.appendChild(card);
+                });
+            }
+            
+            // Check for horizontal symmetry (corrected)
+            function isHorizontallySymmetric(char) {
+                // Characters with horizontal symmetry (mirror across horizontal axis)
+                const hSymChars = 'BCDEHIKOX08↕=-+*cox';
+                return hSymChars.includes(char);
+            }
+            
+            // Check for vertical symmetry (corrected)
+            function isVerticallySymmetric(char) {
+                // Characters with vertical symmetry (mirror across vertical axis)
+                const vSymChars = 'AHIMOTUVWXY08↔|"!.\'ilovwx';
+                return vSymChars.includes(char);
+            }
+            
+            // Select a character to display
+            function selectCharacter(char) {
+                document.querySelectorAll('.character-card.selected').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                const cards = document.querySelectorAll('.character-card');
+                cards.forEach(card => {
+                    if (card.textContent.includes(char)) {
+                        card.classList.add('selected');
+                    }
+                });
+                
+                originalDisplay.textContent = char;
+                horizontalDisplay.textContent = char;
+                verticalDisplay.textContent = char;
+                bothDisplay.textContent = char;
+            }
+            
+            // Filter buttons
+            resetBtn.addEventListener('click', () => {
+                document.querySelectorAll('.character-card').forEach(card => {
+                    card.style.display = 'block';
+                });
+            });
+            
+            hSymBtn.addEventListener('click', () => {
+                document.querySelectorAll('.character-card').forEach(card => {
+                    if (card.dataset.hSym) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+            
+            vSymBtn.addEventListener('click', () => {
+                document.querySelectorAll('.character-card').forEach(card => {
+                    if (card.dataset.vSym) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+            
+            bothSymBtn.addEventListener('click', () => {
+                document.querySelectorAll('.character-card').forEach(card => {
+                    if (card.dataset.bothSym) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Initialize
+            createCharacterCards();
+            selectCharacter('O'); // Start with 'O' as it has both symmetries
+        });
+    </script>
+</body>
+</html>
