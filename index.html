@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,18 +104,6 @@
             display: block;
         }
         
-        .flip-h {
-            transform: scaleX(-1);
-        }
-        
-        .flip-v {
-            transform: scaleY(-1);
-        }
-        
-        .flip-both {
-            transform: scale(-1, -1);
-        }
-        
         .selected {
             background-color: #e8f5e9;
             border: 2px solid #4CAF50;
@@ -134,26 +123,12 @@
             align-items: center;
         }
         
-        .info-character {
-            font-size: 60px;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 10px;
-            background-color: #f5f5f5;
-            border-radius: 8px;
-        }
-        
-        .flip-icon {
-            font-size: 18px;
-            margin-right: 5px;
-            color: inherit;
-        }
-        
+        /* Updated flip container styles for animation */
         .display-container {
             text-align: center;
+            perspective: 1000px;
+            width: 80px;
+            margin: 0 10px;
         }
         
         .display-title {
@@ -162,6 +137,74 @@
             justify-content: center;
             margin-bottom: 5px;
             font-size: 14px;
+        }
+        
+        /* New flip card styles */
+        .flip-container {
+            width: 80px;
+            height: 80px;
+            perspective: 1000px;
+        }
+        
+        .flipper {
+            width: 100%;
+            height: 100%;
+            transition: transform 1.2s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        
+        .flipper.flipped-h {
+            transform: rotateY(180deg);
+        }
+        
+        .flipper.flipped-v {
+            transform: rotateX(180deg);
+        }
+        
+        .flipper.flipped-both {
+            transform: rotate3d(1, 1, 0, 180deg);
+        }
+        
+        .front, .back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            font-size: 60px;
+        }
+        
+        .back {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-h {
+            transform: scaleX(-1);
+        }
+        
+        .flip-v {
+            transform: scaleY(-1);
+        }
+        
+        .flip-both {
+            transform: scale(-1, -1);
+        }
+        
+        .back-h {
+            transform: rotateY(180deg);
+        }
+        
+        .back-v {
+            transform: rotateX(180deg);
+        }
+        
+        .back-both {
+            transform: rotate3d(1, 1, 0, 180deg);
         }
         
         .sym-indicator {
@@ -221,28 +264,54 @@
                     <div class="display-title">
                         <span>Original</span>
                     </div>
-                    <div class="info-character" id="original"></div>
+                    <div class="flip-container">
+                        <div class="flipper" id="original-flipper">
+                            <div class="front" id="original"></div>
+                            <div class="back" id="original-back"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="display-container">
                     <div class="display-title">
                         <span class="flip-icon">↔️</span>
                         <span>H-Flip</span>
                     </div>
-                    <div class="info-character flip-h" id="horizontal"></div>
+                    <div class="flip-container">
+                        <div class="flipper" id="h-flipper">
+                            <div class="front" id="horizontal"></div>
+                            <div class="back back-h" id="horizontal-back">
+                                <span class="flip-h" id="h-flipped-char"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="display-container">
                     <div class="display-title">
                         <span class="flip-icon">↕️</span>
                         <span>V-Flip</span>
                     </div>
-                    <div class="info-character flip-v" id="vertical"></div>
+                    <div class="flip-container">
+                        <div class="flipper" id="v-flipper">
+                            <div class="front" id="vertical"></div>
+                            <div class="back back-v" id="vertical-back">
+                                <span class="flip-v" id="v-flipped-char"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="display-container">
                     <div class="display-title">
                         <span class="flip-icon">⟲</span>
                         <span>Both</span>
                     </div>
-                    <div class="info-character flip-both" id="both"></div>
+                    <div class="flip-container">
+                        <div class="flipper" id="both-flipper">
+                            <div class="front" id="both"></div>
+                            <div class="back back-both" id="both-back">
+                                <span class="flip-both" id="both-flipped-char"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -276,6 +345,16 @@
             const verticalDisplay = document.getElementById('vertical');
             const bothDisplay = document.getElementById('both');
             
+            // Flipped character spans
+            const hFlippedChar = document.getElementById('h-flipped-char');
+            const vFlippedChar = document.getElementById('v-flipped-char');
+            const bothFlippedChar = document.getElementById('both-flipped-char');
+            
+            // Flippers
+            const hFlipper = document.getElementById('h-flipper');
+            const vFlipper = document.getElementById('v-flipper');
+            const bothFlipper = document.getElementById('both-flipper');
+            
             const resetBtn = document.getElementById('reset');
             const hSymBtn = document.getElementById('show-h-sym');
             const vSymBtn = document.getElementById('show-v-sym');
@@ -303,6 +382,29 @@
             const specialChars = "!@#$%^&*()_+{}|:<>?-=[];',./`~";
             for (let char of specialChars) {
                 characters.push(char);
+            }
+            
+            // Function to run animations sequentially
+            function runSequentialAnimations() {
+                // Reset all flips first
+                hFlipper.classList.remove('flipped-h');
+                vFlipper.classList.remove('flipped-v');
+                bothFlipper.classList.remove('flipped-both');
+                
+                // First animation: Horizontal flip
+                setTimeout(() => {
+                    hFlipper.classList.add('flipped-h');
+                    
+                    // Second animation: Vertical flip
+                    setTimeout(() => {
+                        vFlipper.classList.add('flipped-v');
+                        
+                        // Third animation: Both flip
+                        setTimeout(() => {
+                            bothFlipper.classList.add('flipped-both');
+                        }, 1500);
+                    }, 1500);
+                }, 500);
             }
             
             // Create character cards
@@ -376,10 +478,24 @@
                     }
                 });
                 
+                // Reset all flips first
+                hFlipper.classList.remove('flipped-h');
+                vFlipper.classList.remove('flipped-v');
+                bothFlipper.classList.remove('flipped-both');
+                
+                // Front displays (original)
                 originalDisplay.textContent = char;
                 horizontalDisplay.textContent = char;
                 verticalDisplay.textContent = char;
                 bothDisplay.textContent = char;
+                
+                // Update the flipped characters
+                hFlippedChar.textContent = char;
+                vFlippedChar.textContent = char;
+                bothFlippedChar.textContent = char;
+                
+                // Run the sequential animations
+                runSequentialAnimations();
             }
             
             // Filter buttons
