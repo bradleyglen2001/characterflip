@@ -1,0 +1,1 @@
+Some letters can be flipped horizontally and still look the same. Some can be flipped vertically and still look the same. This is a one page website allows a user to see how a letter appears after flipping. 
